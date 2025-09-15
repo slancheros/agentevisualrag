@@ -1,0 +1,70 @@
+# -----------------------
+# Python
+# -----------------------
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+*.egg
+*.egg-info/
+.eggs/
+*.log
+*.sqlite3
+*.db
+*.DS_Store
+
+# Virtual environments
+.venv/
+venv/
+ENV/
+env/
+.conda/
+
+# Jupyter / IPython
+.ipynb_checkpoints
+*.ipynb_save
+.profile_default/
+ipython_config.py
+
+# -----------------------
+# VS Code
+# -----------------------
+.vscode/
+.history/
+*.code-workspace
+
+# -----------------------
+# Docker / Compose
+# -----------------------
+# Local volumes
+weaviate_data/
+data/uploads/
+data/tmp/
+data/cache/
+data/logs/
+# Named volumes metadata
+docker-compose.override.yml
+
+# -----------------------
+# Node / Frontend 
+# -----------------------
+node_modules/
+dist/
+build/
+*.lock
+
+# -----------------------
+# Env / Secrets
+# -----------------------
+.env
+.env.*
+!.env.example
+
+# -----------------------
+# OS
+# -----------------------
+Thumbs.db
+.DS_Store
+ehthumbs.db
+Icon?
