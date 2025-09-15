@@ -169,18 +169,18 @@ Orquesta el pipeline como grafo:
 ```mermaid
 flowchart TD
   A[embed\n(genera qvec)] --> B[retrieve\n(top_k)]
-  B -->|candidates > 0| C1[enrich_A\n(Price API 1)]
-  B -->|candidates > 0| C2[enrich_B\n(Price API 2)]
-  B -->|candidates == 0| B2[retrieve_fallback\n(top_k + delta)]
+  B -->|candidates > 0| C1[enrich_A\n Price API 1]
+  B -->|candidates > 0| C2[enrich_B\n Price API 2]
+  B -->|candidates == 0| B2[retrieve_fallback\n top_k + delta]
 
   B2 -->|candidates > 0| C1
   B2 -->|candidates > 0| C2
   B2 -->|sin candidatos| Z[(END)]
 
-  C1 --> D[merge_enrich\n(unifica A/B,\nprecio menor)]
+  C1 --> D[merge_enrich\n unifica A/B,\nprecio menor]
   C2 --> D
-  D --> E[rank\n(online→sim→precio)]
-  E --> F[(RESULTS)]
+  D --> E[rank\n online→sim→precio ]
+  E --> F[ RESULTS]
 ```
 
 ---
