@@ -1,21 +1,18 @@
 version: "3.9"
 
-name: visual-agent-local
+name: visual-agent-rag
 
 services:
-  # ---------------------------
-  # Vector DB (persistente)
-  # ---------------------------
   weaviate:
     image: semitechnologies/weaviate:1.25.8
     restart: unless-stopped
     ports:
-      - "8080:8080"   # API
+      - "8080:8080"
     environment:
       PERSISTENCE_DATA_PATH: /var/lib/weaviate
-      AUTHENTICATION_ANONYMOUS_ACCESS_ENABLED: "true"  # << para demo local
+      AUTHENTICATION_ANONYMOUS_ACCESS_ENABLED: "true"
       AUTHORIZATION_ADMINLIST_ENABLED: "false"
-      DEFAULT_VECTORIZER_MODULE: "none"                # usamos embeddings externos
+      DEFAULT_VECTORIZER_MODULE: "none"
       ENABLE_MODULES: ""
       QUERY_DEFAULTS_LIMIT: 25
       CLUSTER_HOSTNAME: "node1"
@@ -29,10 +26,8 @@ services:
     networks:
       - ragnet
 
-    # ==========================
-  # API FastAPI
-  # ==========================
   app:
+    # API ligera
     build:
       context: .
       dockerfile: Dockerfile
@@ -41,20 +36,16 @@ services:
       weaviate:
         condition: service_healthy
     environment:
-      # Conexión a Weaviate dentro de la red del compose
       WEAVIATE_URL: http://weaviate:8080
       WEAVIATE_API_KEY: ""
-      # LangChain/LLM (cuando se usa /ask)
       OPENAI_API_KEY: ${OPENAI_API_KEY:-}
-      # Imagen por defecto para pruebas con el agente
       DEFAULT_QUERY_IMAGE: SYNTH/img_0001.jpg
-      # Puerto interno del uvicorn
       PORT: "8000"
     ports:
       - "8000:8000"
     volumes:
-      - ./data:/app/data              # uploads, datasets locales
-      - ./app/static:/app/app/static  # frontend simple
+      - ./data:/app/data
+      - ./app/static:/app/app/static
     networks:
       - ragnet
     healthcheck:
@@ -63,77 +54,50 @@ services:
       timeout: 3s
       retries: 30
 
-   # ==========================
-  # Job de indexado (one-shot)
-  # ==========================
   indexer:
+    # Imagen separada para FiftyOne/Torch
     build:
       context: .
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile.indexer
+    restart: "no"  # No reiniciar automáticamente
     depends_on:
       weaviate:
         condition: service_healthy
-      app:
-        condition: service_started
     environment:
+      # FiftyOne
+      FO_DATASET_NAME: fashion_demo
+      FO_USE_EXISTING: "false"          # true si ya existe el dataset
+      FO_ZOO_DATASET: deepfashion      
+      FO_ZOO_SPLIT: validation
+      FO_MAX_SAMPLES: "1000"
+
+      # Embeddings (si usas indexer con FO Brain; si usas CLIP propio, ignora)
+      FO_EMB_FIELD: clip_embedding
+      FO_CLIP_MODEL: clip-vit-base32-torch
+
+      # Weaviate
       WEAVIATE_URL: http://weaviate:8080
       WEAVIATE_API_KEY: ""
-      # dataset/limit segun el script de indexado
-      INDEX_DATA_DIR: /app/data/images
-      INDEX_LIMIT: "300"
+      WVT_CLASS: FashionItem
+      BATCH_SIZE: "128"
+
+      # Límite de indexado al usar indexer CLIP propio
+      INDEX_LIMIT: "1000"
     command: >
       bash -lc "python -m app.indexer"
     volumes:
       - ./data:/app/data
     networks:
       - ragnet
-    restart: "no"   # correr una vez y terminar
-
-  # ---------------------------
-  # MongoDB p/FiftyOne
-  # ---------------------------
-  fiftyone-db:
-    image: mongo:6.0
-    restart: unless-stopped
-    profiles: ["fiftyone"]
-    volumes:
-      - fiftyone_mongo:/data/db
-    networks:
-      - ragnet
-
-  # ---------------------------
-  #  FiftyOne App
-  # ---------------------------
-  fiftyone:
-    image: voxel51/fiftyone:latest
-    restart: unless-stopped
-    depends_on:
-      fiftyone-db:
-        condition: service_started
-    profiles: ["fiftyone"]
-    environment:
-      # Conexion de FiftyOne a la base Mongo del compose
-      FIFTYONE_DATABASE_URI: mongodb://fiftyone-db:27017
-      # Expone la app web
-      FIFTYONE_APP_ADDRESS: 0.0.0.0
-      FIFTYONE_APP_PORT: "5151"
-      # No abrir navegador dentro del contenedor
-      FIFTYONE_DISABLE_BROWSER: "1"
-    command: >
-      bash -lc "fiftyone app launch --address 0.0.0.0 --port 5151 --remote"
-    ports:
-      - "5151:5151"   # UI de FiftyOne
-    volumes:
-      - ./data:/data              
-      # datasets/archivos locales
-     
-      # - ./datasets:/datasets
-    networks:
-      - ragnet
+    # Para GPU (si tu imagen base soporta CUDA):
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - capabilities: [gpu]
 
 volumes:
   weaviate_data:
-  fiftyone_mongo:
 
 networks:
   ragnet:

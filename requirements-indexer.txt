@@ -1,0 +1,8 @@
+# requirements-indexer.txt (para el indexador con FiftyOne y Torch)
+fiftyone>=0.23.6,<0.24
+fiftyone-brain>=0.16.1,<0.17
+
+weaviate-client~=3.25
+open-clip-torch~=2.24
+torch~=2.3
+Pillow~=10.4

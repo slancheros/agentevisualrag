@@ -130,8 +130,41 @@ Interfaz conversacional (requiere instalar `requirements-agent.txt`).
 ```bash
 curl -X POST http://localhost:8000/ask   -H "Content-Type: application/json"   -d '{"prompt": "Busca similares a data/query.jpg, online y debajo de 40€"}'
 ```
-
+##  Estructura de Singletons 
 ---
+
+```mermaid
+flowchart LR 
+  subgraph FastAPI App
+    M[main.py\n/health /upload /retrieve /ask /admin/index]
+    D[deps.py\n Composition Root]
+    VA[VisualAgent\n orquestador]
+  end
+
+  subgraph Tools - implementaciones
+    DS[DatasetTool\n• FiftyOneDataset\n• MockDataset]
+    EMB[EmbedderTool\n• CLIPEmbedder\n• MockEmbedder]
+    VS[VectorStoreTool\n• WeaviateVectorStore\n• MockVectorStore]
+    ENR[EnricherTool\n• PriceAPI\n• MockEnricher]
+  end
+
+  subgraph Infra
+    WVT[Weaviate DB]
+    FO[FiftyOne DB]
+    FS[data/ imágenes]
+  end
+
+  M -->|importa| D
+  D -->|crea 1 vez| VA
+  VA --> DS
+  VA --> EMB
+  VA --> VS
+  VA --> ENR
+
+  DS -.lee rutas/metadata.-> FO
+  DS -.o archivos.-> FS
+  VS --> WVT
+```
 
 ## 🗂️ Persistencia en Weaviate
 
@@ -200,6 +233,18 @@ app/
 ├── graph_runtime.py    # (opcional) LangGraph pipeline
 └── static/             # Frontend (index.html, styles.css, script.js)
 ```
+
+# Comandos para ejecución de la indexación (One Shot)
+1. Indexar
+```
+docker compose run --rm indexer
+```
+2.Reindexar desde cero
+```
+curl -s -X DELETE http://localhost:8080/v1/schema/FashionItem
+
+```
+
 
 ---
 

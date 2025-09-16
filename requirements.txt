@@ -2,3 +2,12 @@ fastapi>=0.112
 uvicorn[standard]>=0.30
 pydantic>=2.7
 python-dotenv>=1.0
+
+# Cliente Weaviate para vector store
+weaviate-client~=3.25.0
+
+# Dependencias para usar CLIP como embedder
+open-clip-torch~=2.24
+torch~=2.3
+Pillow~=10.4
+

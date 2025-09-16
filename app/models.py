@@ -27,3 +27,11 @@ class RetrieveResponse(BaseModel):
 
 class AskRequest(BaseModel):
     prompt: str
+
+# app/models.py (añade al final)
+from pydantic import BaseModel, Field
+
+class IndexRequest(BaseModel):
+    limit: int = Field(1000, ge=1, le=100000, description="Cantidad de items indexar")
+    rebuild_schema: bool = Field(False, description="Si true, borra y recrea la clase en Weaviate")
+    reset_data: bool = Field(False, description="Si true, borra y reindexa todo desde el dataset")

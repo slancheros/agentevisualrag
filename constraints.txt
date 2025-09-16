@@ -1,0 +1,4 @@
+numpy==1.26.4
+protobuf==4.25.3
+grpcio==1.64.1
+pymongo==4.6.3

@@ -1,0 +1,25 @@
+# Imagen separada SOLO para el indexador (FiftyOne + Torch)
+FROM python:3.11-slim
+
+ENV PIP_DISABLE_PIP_VERSION_CHECK=1 PIP_NO_CACHE_DIR=1
+
+
+
+WORKDIR /app
+ENV DEBIAN_FRONTEND=noninteractive
+
+COPY constraints.txt .
+# Copiamos requirements del indexador primero para cachear
+COPY requirements-indexer.txt .
+
+# Instala deps del indexador
+RUN pip install --no-cache-dir -r requirements-indexer.txt -c constraints.txt
+
+# Copia el código (necesitamos app/indexer.py y tools)
+COPY app ./app
+
+# Directorios de datos (montados por compose igualmente)
+RUN mkdir -p /app/data
+
+# Comando por defecto (puedes sobreescribirlo en compose)
+CMD ["python", "-m", "app.indexer"]

@@ -1,4 +1,4 @@
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 from .types import AgentConfig, AgentResponse, EnrichedItem, RetrievalCandidate
 from .tools.base import EmbedderTool, DatasetTool, VectorStoreTool, EnricherTool
 
@@ -8,7 +8,7 @@ class VisualAgent:
     def __init__(
         self,
         embedder: EmbedderTool,
-        dataset: DatasetTool,
+        dataset: Optional[object],
         vstore: VectorStoreTool,
         enricher: EnricherTool,
         config: AgentConfig = AgentConfig(),
