@@ -7,7 +7,7 @@ from app.core.tools.mock_dataset import MockDataset
 from app.core.tools.mock_vector_store import MockVectorStore
 from app.core.tools.mock_enricher import MockEnricher
 
-# Intercambiable entre MockVectorStore y un backend real (Weaviate, FAISS, etc.) VectorStoreTool.
+# Intercambiable entre MockVectorStore y un vectore store real (Weaviate, FAISS, etc.) VectorStoreTool.
 
 def main():
     data_dir = os.getenv("INDEX_DATA_DIR", "/app/data/images")

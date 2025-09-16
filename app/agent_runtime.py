@@ -17,6 +17,9 @@ except Exception as e:
     ChatOpenAI = None
 
 class VisualRetrieveInput(BaseModel):
+    '''
+    Esquema de entrada para la recuperación visual.
+    '''
     query_image: Optional[str] = Field(None, description="Ruta a la imagen de consulta")
     top_k: int = Field(10, ge=1, le=30)
     prefer_online: bool = True
@@ -25,6 +28,9 @@ class VisualRetrieveInput(BaseModel):
 
 def visual_agent_tool_fn(query_image: str, top_k: int = 10, prefer_online: bool = True,
                          filter_color: Optional[str] = None, max_price: Optional[float] = None) -> str:
+    '''
+    Función que implementa la lógica de recuperación visual para el agente.
+    '''
     query_image = query_image or DEFAULT_QUERY_IMAGE
     agent = agent_singleton
     agent.cfg.top_k = top_k
@@ -39,6 +45,8 @@ def visual_agent_tool_fn(query_image: str, top_k: int = 10, prefer_online: bool 
     return json.dumps({"query_image": query_image, "count": len(items), "results": items}, ensure_ascii=False)
 
 def build_agent():
+    '''Construye y devuelve un agente de LangChain con la herramienta de recuperación visual.
+    '''
     if StructuredTool is None:
         raise RuntimeError("Instala extras: pip install -r requirements-agent.txt")
     tool = StructuredTool.from_function(

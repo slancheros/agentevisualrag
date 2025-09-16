@@ -3,6 +3,8 @@ from .types import AgentConfig, AgentResponse, EnrichedItem, RetrievalCandidate
 from .tools.base import EmbedderTool, DatasetTool, VectorStoreTool, EnricherTool
 
 class VisualAgent:
+    """Agente visual que combina incrustación, recuperación, enriquecimiento y clasificación.
+    """
     def __init__(
         self,
         embedder: EmbedderTool,
@@ -19,6 +21,7 @@ class VisualAgent:
         self._indexed = False
 
     def _ensure_index(self, limit: int = 200):
+        '''Asegura que el índice esté construido (indexación lazy).'''
         if self._indexed:
             return
         fps = self.dataset.sample_paths(limit=limit)
@@ -28,6 +31,7 @@ class VisualAgent:
         self._indexed = True
 
     def _retrieve(self, qvec: List[float], k: int) -> List[RetrievalCandidate]:
+        '''Recupera los candidatos relevantes del vector store.'''
         raw = self.vstore.query(qvec, k=k)
         out: List[RetrievalCandidate] = []
         for r in raw:
@@ -38,6 +42,7 @@ class VisualAgent:
         return out
 
     def _rank(self, items: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+        '''Clasifica los items enriquecidos según preferencia online, similitud y precio.'''
         def key_fn(x):
             priority = 0 if (self.cfg.prefer_online and x.get("source") == "online") else 1
             sim = -float(x.get("similarity", 0.0))
@@ -46,6 +51,7 @@ class VisualAgent:
         return sorted(items, key=key_fn)
 
     def retrieve(self, query_image: str) -> AgentResponse:
+        '''Realiza la recuperación visual completa y devuelve la respuesta del agente.'''
         self._ensure_index()
         qvec = self.embedder.embed_image(query_image)
         cands = self._retrieve(qvec, k=self.cfg.top_k)

@@ -3,6 +3,9 @@ from typing import Dict, Any, List, Optional
 
 @dataclass
 class RetrievalCandidate:
+    '''
+    Candidato para la recuperación visual.
+    '''
     id: str
     filepath: str
     similarity: float
@@ -10,6 +13,9 @@ class RetrievalCandidate:
 
 @dataclass
 class EnrichedItem:
+    '''
+    Item enriquecido para la recuperación visual.
+    '''
     id: str
     filepath: str
     similarity: float
@@ -23,10 +29,14 @@ class EnrichedItem:
 
 @dataclass
 class AgentResponse:
+    '''
+    Respuesta del agente para la recuperación visual.
+    '''
     query_image: str
     results: List[EnrichedItem]
 
 @dataclass
 class AgentConfig:
+    '''Configuración del agente visual.'''
     top_k: int = 10
     prefer_online: bool = True
