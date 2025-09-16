@@ -17,7 +17,7 @@ def health():
 @app.post("/retrieve", response_model=RetrieveResponse)
 def retrieve(req: RetrieveRequest):
     try:
-        # Ajustes dinámicos
+   
         agent_singleton.cfg.top_k = req.top_k
         agent_singleton.cfg.prefer_online = req.prefer_online
 
@@ -37,12 +37,12 @@ def retrieve(req: RetrieveRequest):
 @app.post("/ask")
 def ask(req: AskRequest):
     """
-    Endpoint conversacional (opcional). Requiere instalar extras del agente.
+    Endpoint conversacional . 
     """
     try:
-        agent = build_agent()  # construye si están las dependencias
+        agent = build_agent()  
         result = agent.invoke({"input": req.prompt})
         return JSONResponse({"output": result["output"]})
     except Exception as e:
-        # mensaje claro si no están instaladas las deps del agente
+
         raise HTTPException(status_code=500, detail=f"No se pudo ejecutar el agente. {e}")

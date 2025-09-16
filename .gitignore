@@ -68,3 +68,8 @@ Thumbs.db
 .DS_Store
 ehthumbs.db
 Icon?
+
+# Data files (datasets, uploads, cache)
+data/uploads/
+data/images/
+data/cache/

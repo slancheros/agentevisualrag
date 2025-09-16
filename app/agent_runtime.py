@@ -3,6 +3,9 @@ from dataclasses import asdict
 from typing import Optional
 from pydantic import BaseModel, Field
 from app.deps import agent_singleton
+import os
+
+DEFAULT_QUERY_IMAGE = os.getenv("DEFAULT_QUERY_IMAGE", "data/images/SYNTH/img_0001.jpg")
 
 try:
     from langchain.tools import StructuredTool
@@ -14,7 +17,7 @@ except Exception as e:
     ChatOpenAI = None
 
 class VisualRetrieveInput(BaseModel):
-    query_image: str
+    query_image: Optional[str] = Field(None, description="Ruta a la imagen de consulta")
     top_k: int = Field(10, ge=1, le=30)
     prefer_online: bool = True
     filter_color: Optional[str] = None
@@ -22,6 +25,7 @@ class VisualRetrieveInput(BaseModel):
 
 def visual_agent_tool_fn(query_image: str, top_k: int = 10, prefer_online: bool = True,
                          filter_color: Optional[str] = None, max_price: Optional[float] = None) -> str:
+    query_image = query_image or DEFAULT_QUERY_IMAGE
     agent = agent_singleton
     agent.cfg.top_k = top_k
     agent.cfg.prefer_online = prefer_online
@@ -44,11 +48,11 @@ def build_agent():
         args_schema=VisualRetrieveInput,
         return_direct=False,
     )
-    llm = ChatOpenAI(model="gpt-4o-mini", temperature=0)  #OPENAI_API_KEY
+    llm = ChatOpenAI(model="gpt-4o-mini", temperature=0)  
     agent = initialize_agent(
         tools=[tool],
         llm=llm,
-        agent=AgentType.ZERO_SHOT_REACT_DESCRIPTION,
+        agent=AgentType.STRUCTURED_CHAT_ZERO_SHOT_REACT_DESCRIPTION,
         verbose=False,
         handle_parsing_errors=True,
     )

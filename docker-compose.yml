@@ -1,11 +1,140 @@
 version: "3.9"
+
+name: visual-agent-local
+
 services:
-  visual-agents-api:
-    build: .
+  # ---------------------------
+  # Vector DB (persistente)
+  # ---------------------------
+  weaviate:
+    image: semitechnologies/weaviate:1.25.8
+    restart: unless-stopped
+    ports:
+      - "8080:8080"   # API
+    environment:
+      PERSISTENCE_DATA_PATH: /var/lib/weaviate
+      AUTHENTICATION_ANONYMOUS_ACCESS_ENABLED: "true"  # << para demo local
+      AUTHORIZATION_ADMINLIST_ENABLED: "false"
+      DEFAULT_VECTORIZER_MODULE: "none"                # usamos embeddings externos
+      ENABLE_MODULES: ""
+      QUERY_DEFAULTS_LIMIT: 25
+      CLUSTER_HOSTNAME: "node1"
+    volumes:
+      - weaviate_data:/var/lib/weaviate
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8080/v1/.well-known/ready >/dev/null 2>&1 || exit 1"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+    networks:
+      - ragnet
+
+    # ==========================
+  # API FastAPI
+  # ==========================
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    depends_on:
+      weaviate:
+        condition: service_healthy
+    environment:
+      # Conexión a Weaviate dentro de la red del compose
+      WEAVIATE_URL: http://weaviate:8080
+      WEAVIATE_API_KEY: ""
+      # LangChain/LLM (cuando se usa /ask)
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      # Imagen por defecto para pruebas con el agente
+      DEFAULT_QUERY_IMAGE: SYNTH/img_0001.jpg
+      # Puerto interno del uvicorn
+      PORT: "8000"
     ports:
       - "8000:8000"
+    volumes:
+      - ./data:/app/data              # uploads, datasets locales
+      - ./app/static:/app/app/static  # frontend simple
+    networks:
+      - ragnet
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8000/health >/dev/null 2>&1 || exit 1"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+
+   # ==========================
+  # Job de indexado (one-shot)
+  # ==========================
+  indexer:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    depends_on:
+      weaviate:
+        condition: service_healthy
+      app:
+        condition: service_started
     environment:
-      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      WEAVIATE_URL: http://weaviate:8080
+      WEAVIATE_API_KEY: ""
+      # dataset/limit segun el script de indexado
+      INDEX_DATA_DIR: /app/data/images
+      INDEX_LIMIT: "300"
+    command: >
+      bash -lc "python -m app.indexer"
     volumes:
       - ./data:/app/data
-    command: uvicorn app.main:app --host  
+    networks:
+      - ragnet
+    restart: "no"   # correr una vez y terminar
+
+  # ---------------------------
+  # MongoDB p/FiftyOne
+  # ---------------------------
+  fiftyone-db:
+    image: mongo:6.0
+    restart: unless-stopped
+    profiles: ["fiftyone"]
+    volumes:
+      - fiftyone_mongo:/data/db
+    networks:
+      - ragnet
+
+  # ---------------------------
+  #  FiftyOne App
+  # ---------------------------
+  fiftyone:
+    image: voxel51/fiftyone:latest
+    restart: unless-stopped
+    depends_on:
+      fiftyone-db:
+        condition: service_started
+    profiles: ["fiftyone"]
+    environment:
+      # Conexion de FiftyOne a la base Mongo del compose
+      FIFTYONE_DATABASE_URI: mongodb://fiftyone-db:27017
+      # Expone la app web
+      FIFTYONE_APP_ADDRESS: 0.0.0.0
+      FIFTYONE_APP_PORT: "5151"
+      # No abrir navegador dentro del contenedor
+      FIFTYONE_DISABLE_BROWSER: "1"
+    command: >
+      bash -lc "fiftyone app launch --address 0.0.0.0 --port 5151 --remote"
+    ports:
+      - "5151:5151"   # UI de FiftyOne
+    volumes:
+      - ./data:/data              
+      # datasets/archivos locales
+     
+      # - ./datasets:/datasets
+    networks:
+      - ragnet
+
+volumes:
+  weaviate_data:
+  fiftyone_mongo:
+
+networks:
+  ragnet:
+    driver: bridge
