@@ -54,41 +54,56 @@ services:
       timeout: 3s
       retries: 30
 
+  
+
+  mongo:
+    image: mongo:5.0
+    restart: unless-stopped
+    ports:
+      - "27017:27017"        # opcional exponerlo al host
+    volumes:
+      - mongo_data:/data/db
+    networks:
+      - ragnet
+
   indexer:
-    # Imagen separada para FiftyOne/Torch
+    command: bash -lc "python -m app.indexer"
+
     build:
       context: .
       dockerfile: Dockerfile.indexer
-    restart: "no"  # No reiniciar automáticamente
+    restart: "no"
     depends_on:
       weaviate:
         condition: service_healthy
+      mongo:
+        condition: service_started
     environment:
-      # FiftyOne
+      # FiftyOne -> usa el mongo del compose
+      FIFTYONE_DATABASE_URI: mongodb://mongo:27017
+
       FO_DATASET_NAME: fashion_demo
-      FO_USE_EXISTING: "false"          # true si ya existe el dataset
-      FO_ZOO_DATASET: deepfashion      
-      FO_ZOO_SPLIT: validation
+      FO_USE_EXISTING: "false"
+      FO_ZOO_DATASET: fashion-mnist
+      FO_ZOO_SPLIT: test
       FO_MAX_SAMPLES: "1000"
 
-      # Embeddings (si usas indexer con FO Brain; si usas CLIP propio, ignora)
       FO_EMB_FIELD: clip_embedding
       FO_CLIP_MODEL: clip-vit-base32-torch
 
-      # Weaviate
       WEAVIATE_URL: http://weaviate:8080
       WEAVIATE_API_KEY: ""
       WVT_CLASS: FashionItem
       BATCH_SIZE: "128"
-
-      # Límite de indexado al usar indexer CLIP propio
       INDEX_LIMIT: "1000"
-    command: >
-      bash -lc "python -m app.indexer"
     volumes:
       - ./data:/app/data
+      - fiftyone_data:/root/fiftyone   
     networks:
       - ragnet
+
+
+
     # Para GPU (si tu imagen base soporta CUDA):
     # deploy:
     #   resources:
@@ -98,6 +113,8 @@ services:
 
 volumes:
   weaviate_data:
+  mongo_data:
+  fiftyone_data:
 
 networks:
   ragnet:

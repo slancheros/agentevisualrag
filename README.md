@@ -234,7 +234,7 @@ app/
 └── static/             # Frontend (index.html, styles.css, script.js)
 ```
 
-# Comandos para ejecución de la indexación (One Shot)
+## Comandos para ejecución de la indexación (One Shot)
 1. Indexar
 ```
 docker compose run --rm indexer
@@ -245,17 +245,24 @@ curl -s -X DELETE http://localhost:8080/v1/schema/FashionItem
 
 ```
 
+### usando el valor por defecto del FILE
+make upload-retrieve
+
+### o especificando tu imagen
+make upload-retrieve FILE=./data/uploads/mifoto.jpg TOP_K=6
+
+
 
 ---
 
 ## 🤝 Cómo extender
 
-1. Sustituye `MockEmbedder` por **CLIP/OpenCLIP**.  
-2. Cambia `MockDataset` por **FiftyOne** (dataset real de prendas).  
-3. Cambia `MockVectorStore` por **Weaviate** (ya montado) o FAISS.  
-4. Cambia `MockEnricher` por API real de precios/stores.  
+1. Sustituir `MockEmbedder` por **CLIP/OpenCLIP** o por una implementación propia.  
+2. Cambiar `MockDataset` por **FiftyOne** (dataset real de prendas).  
+3. Cambiar `MockVectorStore` por **Weaviate** (ya montado) o FAISS.  Puede aportarse una implementación de otro cliente de Vector Store.
+4. Cambiar `MockEnricher` por API real de precios/stores.  Se puede igualmente extender por otra implementación de Enricher. La idea es agregar los datos específicos para cada uso de negocio.
 
-👉 Gracias a las **interfaces comunes** (`EmbedderTool`, `DatasetTool`, `VectorStoreTool`, `EnricherTool`), no tienes que reescribir el orquestador.
+👉 Gracias a las **interfaces comunes** (`EmbedderTool`, `DatasetTool`, `VectorStoreTool`, `EnricherTool`), no se requiere reescribir el orquestador. Sin embargo, puede jugarse a adaptar y agregar nuevos tools que el agente pueda requerir.
 
 ---
 

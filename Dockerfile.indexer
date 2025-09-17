@@ -16,7 +16,7 @@ COPY requirements-indexer.txt .
 RUN pip install --no-cache-dir -r requirements-indexer.txt -c constraints.txt
 
 # Copia el código (necesitamos app/indexer.py y tools)
-COPY app ./app
+COPY . .
 
 # Directorios de datos (montados por compose igualmente)
 RUN mkdir -p /app/data
