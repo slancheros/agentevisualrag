@@ -99,17 +99,10 @@ services:
     volumes:
       - ./data:/app/data
       - fiftyone_data:/root/fiftyone   
+      - ./fiftyone_config.json:/root/.fiftyone/config.json:ro   
     networks:
       - ragnet
 
-
-
-    # Para GPU (si tu imagen base soporta CUDA):
-    # deploy:
-    #   resources:
-    #     reservations:
-    #       devices:
-    #         - capabilities: [gpu]
 
 volumes:
   weaviate_data:

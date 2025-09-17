@@ -246,16 +246,18 @@ curl -s -X DELETE http://localhost:8080/v1/schema/FashionItem
 ```
 
 ### usando el valor por defecto del FILE
+```
 make upload-retrieve
-
+```
 ### o especificando tu imagen
+```
 make upload-retrieve FILE=./data/uploads/mifoto.jpg TOP_K=6
-
+```
 
 
 ---
 
-## 🤝 Cómo extender
+## Cómo extender
 
 1. Sustituir `MockEmbedder` por **CLIP/OpenCLIP** o por una implementación propia.  
 2. Cambiar `MockDataset` por **FiftyOne** (dataset real de prendas).  
